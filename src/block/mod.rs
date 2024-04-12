@@ -36,11 +36,10 @@ impl Block {
 }
 
 pub fn launch_blockchain() {
-    BLOCKCHAIN.with(|blockchain| blockchain.borrow_mut().push_front(Block::genesis_block()));
+    BLOCKCHAIN.with(|blockchain| blockchain.borrow_mut().push_back(Block::genesis_block()));
 }
 #[cfg(test)]
 mod tests {
-    use std::clone;
 
     use super::*;
 
