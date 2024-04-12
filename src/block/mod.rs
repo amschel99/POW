@@ -3,9 +3,9 @@ use std::cell::RefCell;
 use std::collections::LinkedList;
 
 thread_local! {
-    static  BLOCKCHAIN: RefCell<LinkedList<Block>> = RefCell::new(LinkedList::new());
+    static  BLOCKCHAIN: RefCell<Blockchain> = RefCell::new(Blockchain::new());
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Block {
     hash: String,
     previous: Option<String>,
@@ -13,17 +13,23 @@ struct Block {
     nonce: Option<String>,
     metadata: Option<String>,
 }
-pub trait IsBlock {
-    fn unique_hash() -> String;
+#[derive(Debug)]
+struct Blockchain {
+    blocks: LinkedList<Block>,
+    difficulty: u64,
 }
-
-impl IsBlock for Block {
-    fn unique_hash() -> String {
-        String::from("This is a random unique hash")
+impl Blockchain {
+    fn new() -> Self {
+        Self {
+            blocks: LinkedList::new(),
+            difficulty: 1,
+        }
     }
-}
 
-impl Block {
+    fn add_block(&mut self, block: Block) {
+        self.blocks.push_back(block);
+    }
+
     fn genesis_block() -> Block {
         Block {
             hash: Block::unique_hash(),
@@ -35,8 +41,23 @@ impl Block {
     }
 }
 
+pub trait IsBlock {
+    fn unique_hash() -> String;
+}
+
+impl IsBlock for Block {
+    fn unique_hash() -> String {
+        String::from("This is a random unique hash")
+    }
+}
+
 pub fn launch_blockchain() {
-    BLOCKCHAIN.with(|blockchain| blockchain.borrow_mut().push_back(Block::genesis_block()));
+    BLOCKCHAIN.with(|blockchain| {
+        blockchain
+            .borrow_mut()
+            .blocks
+            .push_back(Blockchain::genesis_block())
+    });
 }
 #[cfg(test)]
 mod tests {
@@ -46,8 +67,9 @@ mod tests {
     #[test]
     fn test_launch_blockchain() {
         launch_blockchain();
-        let chain =
-            BLOCKCHAIN.with(|blockchain: &RefCell<LinkedList<Block>>| blockchain.take().pop_back());
-        dbg!(chain);
+        let blocks = BLOCKCHAIN.with(|blockchain| blockchain.borrow_mut().blocks.clone());
+        let difficulty = BLOCKCHAIN.with(|blockchain| blockchain.borrow_mut().difficulty.clone());
+        dbg!(blocks);
+        dbg!(difficulty);
     }
 }
